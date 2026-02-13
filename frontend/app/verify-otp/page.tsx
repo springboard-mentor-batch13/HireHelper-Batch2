@@ -1,24 +1,25 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 
 export default function VerifyOTP() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const email = searchParams.get("value")
 
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""])
-  const [verified, setVerified] = useState<boolean>(false)
-  const [timer, setTimer] = useState<number>(30)
-  const [canResend, setCanResend] = useState<boolean>(false)
+  const [error, setError] = useState("")
+  const [verified, setVerified] = useState(false)
+  const [timer, setTimer] = useState(30)
+  const [canResend, setCanResend] = useState(false)
 
   const inputs = useRef<Array<HTMLInputElement | null>>([])
 
-  // ⏳ Countdown Logic
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => {
         setTimer((prev) => prev - 1)
       }, 1000)
-
       return () => clearInterval(interval)
     } else {
       setCanResend(true)
@@ -32,42 +33,44 @@ export default function VerifyOTP() {
     newOtp[index] = value
     setOtp(newOtp)
 
-    if (value !== "" && index < 5) {
+    if (value && index < 5) {
       inputs.current[index + 1]?.focus()
     }
   }
 
-  const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    index: number
-  ) => {
-    if (e.key === "Backspace" && otp[index] === "" && index > 0) {
-      inputs.current[index - 1]?.focus()
+  const handleVerify = async () => {
+    const fullOtp = otp.join("")
+    if (fullOtp.length !== 6) return
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/auth/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          otp: fullOtp
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setVerified(true)
+        setTimeout(() => {
+          router.push("/login")
+        }, 1500)
+      } else {
+        setError("Invalid OTP")
+      }
+
+    } catch (err) {
+      setError("Verification failed")
     }
   }
 
   const isComplete = otp.every((digit) => digit !== "")
-
-  const handleVerify = () => {
-    if (!isComplete) return
-
-    setVerified(true)
-
-    setTimeout(() => {
-      router.push('/login')
-    }, 2000)
-  }
-
-  const handleResend = () => {
-    if (!canResend) return
-
-    setTimer(30)
-    setCanResend(false)
-    setOtp(["", "", "", "", "", ""])
-    inputs.current[0]?.focus()
-
-    console.log("OTP Resent")
-  }
 
   return (
     <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
@@ -75,22 +78,23 @@ export default function VerifyOTP() {
 
       {!verified ? (
         <>
-          <div className="flex justify-between mb-6">
+          <div className="flex justify-between mb-4">
             {otp.map((digit, index) => (
               <input
                 key={index}
-                ref={(el) => {
-                  inputs.current[index] = el
-                }}
+                ref={(el) => { inputs.current[index] = el }}
                 type="text"
                 maxLength={1}
                 value={digit}
                 onChange={(e) => handleChange(e.target.value, index)}
-                onKeyDown={(e) => handleKeyDown(e, index)}
                 className="w-10 h-12 border rounded-lg text-center text-lg focus:ring-2 focus:ring-blue-400 outline-none"
               />
             ))}
           </div>
+
+          {error && (
+            <p className="text-red-500 text-sm mb-3">{error}</p>
+          )}
 
           <button
             disabled={!isComplete}
@@ -101,31 +105,12 @@ export default function VerifyOTP() {
                 : "bg-gray-400 cursor-not-allowed"
             }`}
           >
-            Verify & Create Account
+            Verify OTP
           </button>
-
-          {/* 🔁 RESEND SECTION */}
-          <div className="mt-4 text-sm">
-            {!canResend ? (
-              <p className="text-gray-500">
-                Resend OTP in <span className="font-semibold">{timer}s</span>
-              </p>
-            ) : (
-              <button
-                onClick={handleResend}
-                className="text-blue-600 hover:underline"
-              >
-                Resend OTP
-              </button>
-            )}
-          </div>
         </>
       ) : (
-        <div className="fade-in text-green-600 font-semibold">
-          ✅ Account Created Successfully!
-          <p className="text-gray-500 text-sm mt-2">
-            Redirecting to login...
-          </p>
+        <div className="text-green-600 font-semibold">
+          ✅ Account Verified Successfully!
         </div>
       )}
     </div>

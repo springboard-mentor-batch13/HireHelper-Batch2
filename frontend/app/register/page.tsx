@@ -16,24 +16,64 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [showOtpModal, setShowOtpModal] = useState(false)
-  const [error, setError] = useState('')
+  const [strength, setStrength] = useState("")
+  const [error, setError] = useState("")
+  const [showModal, setShowModal] = useState(false)
 
-  const handleContinue = () => {
-    if (!firstName || !lastName || !email) {
-      setError('Please fill all required fields.')
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.')
-      return
-    }
-
-    setError('')
-    setShowOtpModal(true)
+  const checkStrength = (value: string) => {
+    if (value.length < 6) return "Weak"
+    if (/[!@#$%^&*]/.test(value) && value.length >= 8) return "Strong"
+    return "Medium"
   }
 
+  const handlePasswordChange = (value: string) => {
+    setPassword(value)
+    setStrength(checkStrength(value))
+  }
+const handleContinue = async () => {
+  if (!firstName || !lastName || !email) {
+    setError("Please fill all required fields.")
+    return
+  }
+
+  if (password !== confirmPassword) {
+    setError("Passwords do not match.")
+    return
+  }
+
+  if (strength === "Weak") {
+    setError("Password is too weak.")
+    return
+  }
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/auth/send-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        phone_number: phone,
+        password: password
+      }),
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      setError(result.detail || "Failed to send OTP")
+      return
+    }
+
+    router.push(`/verify-otp?email=${email}`)
+
+  } catch {
+    setError("Something went wrong")
+  }
+}
   return (
     <div className="min-h-screen w-full flex items-center justify-center 
       bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 px-4">
@@ -118,7 +158,7 @@ export default function RegisterPage() {
         </p>
 
         {/* OTP MODAL */}
-        {showOtpModal && (
+        {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
             <div className="bg-white p-6 rounded-2xl w-80">
               <h3 className="text-lg font-semibold text-center mb-4">
