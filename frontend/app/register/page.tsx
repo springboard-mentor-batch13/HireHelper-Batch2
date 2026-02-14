@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Eye, EyeOff, Check, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -16,12 +16,76 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [showOtpModal, setShowOtpModal] = useState(false)
-  const [error, setError] = useState('')
 
-  const handleContinue = () => {
-    if (!firstName || !lastName || !email) {
+  // Password Strength State
+  const [passwordScore, setPasswordScore] = useState(0)
+  const [passwordFeedback, setPasswordFeedback] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false
+  })
+
+  // OTP State
+  const [showOtpModal, setShowOtpModal] = useState(false)
+  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""])
+  const [otpError, setOtpError] = useState('')
+  const [isVerifying, setIsVerifying] = useState(false)
+
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const otpInputs = useRef<Array<HTMLInputElement | null>>([])
+
+  useEffect(() => {
+    checkPasswordStrength(password)
+  }, [password])
+
+  const checkPasswordStrength = (pass: string) => {
+    const feedback = {
+      length: pass.length >= 8,
+      uppercase: /[A-Z]/.test(pass),
+      lowercase: /[a-z]/.test(pass),
+      number: /[0-9]/.test(pass),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(pass)
+    }
+
+    setPasswordFeedback(feedback)
+
+    let score = 0
+    if (feedback.length) score++
+    if (feedback.uppercase) score++
+    if (feedback.lowercase) score++
+    if (feedback.number) score++
+    if (feedback.special) score++
+
+    setPasswordScore(score)
+  }
+
+  const getStrengthColor = () => {
+    if (passwordScore <= 2) return 'bg-red-500'
+    if (passwordScore === 3) return 'bg-yellow-500'
+    if (passwordScore >= 4) return 'bg-green-500'
+    return 'bg-gray-200'
+  }
+
+  const getStrengthLabel = () => {
+    if (passwordScore === 0) return 'Very Weak'
+    if (passwordScore <= 2) return 'Weak'
+    if (passwordScore === 3) return 'Good'
+    if (passwordScore >= 4) return 'Strong'
+    return ''
+  }
+
+  const handleContinue = async () => {
+    if (!firstName || !lastName || !email || !password) {
       setError('Please fill all required fields.')
+      return
+    }
+
+    if (passwordScore < 3) {
+      setError('Password is too weak. Please ensure it meets the requirements.')
       return
     }
 
@@ -31,12 +95,100 @@ export default function RegisterPage() {
     }
 
     setError('')
-    setShowOtpModal(true)
+    setIsLoading(true)
+
+    try {
+      // Request OTP
+      const res = await fetch('http://127.0.0.1:8000/auth/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+
+      if (!res.ok) {
+        throw new Error('Failed to send OTP')
+      }
+
+      setShowOtpModal(true)
+    } catch (err) {
+      setError('Failed to send OTP. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleOtpChange = (value: string, index: number) => {
+    if (!/^[0-9]?$/.test(value)) return
+
+    const newOtp = [...otp]
+    newOtp[index] = value
+    setOtp(newOtp)
+
+    if (value !== "" && index < 5) {
+      otpInputs.current[index + 1]?.focus()
+    }
+  }
+
+  const handleOtpKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    if (e.key === "Backspace" && otp[index] === "" && index > 0) {
+      otpInputs.current[index - 1]?.focus()
+    }
+  }
+
+  const verifyAndSignup = async () => {
+    const otpValue = otp.join('')
+    if (otpValue.length !== 6) return
+
+    setIsVerifying(true)
+    setOtpError('')
+
+    try {
+      // 1. Verify OTP
+      const verifyRes = await fetch('http://127.0.0.1:8000/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: otpValue })
+      })
+
+      const verifyData = await verifyRes.json()
+
+      if (!verifyRes.ok || verifyData.error) {
+        throw new Error(verifyData.error || 'Invalid OTP')
+      }
+
+      // 2. Create Account
+      const signupRes = await fetch('http://127.0.0.1:8000/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          phone_number: phone,
+          password
+        })
+      })
+
+      if (!signupRes.ok) {
+        throw new Error('Failed to create account')
+      }
+
+      // Success
+      router.push('/login')
+
+    } catch (err: any) {
+      setOtpError(err.message || 'Verification failed')
+    } finally {
+      setIsVerifying(false)
+    }
   }
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center 
-      bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 px-4">
+      bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 px-4 py-8">
 
       <div className="relative w-full max-w-md bg-white/95 backdrop-blur 
         rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.35)] p-8">
@@ -75,6 +227,7 @@ export default function RegisterPage() {
               placeholder="Password"
               type={showPassword ? 'text' : 'password'}
               onChange={(e) => setPassword(e.target.value)}
+              value={password}
             />
             <button type="button"
               onClick={() => setShowPassword(!showPassword)}
@@ -82,6 +235,36 @@ export default function RegisterPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+
+          {/* Password Strength Meter */}
+          {password && (
+            <div className="space-y-2 mb-2">
+              <div className="flex gap-1 h-1.5 w-full">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <div key={s}
+                    className={`h-full flex-1 rounded-full transition-all duration-300
+                            ${passwordScore >= s ? getStrengthColor() : 'bg-gray-200'}`}
+                  />
+                ))}
+              </div>
+
+              <div className="flex justify-between items-center text-xs">
+                <span className={`font-medium transition-colors duration-300
+                        ${passwordScore <= 2 ? 'text-red-500' :
+                    passwordScore === 3 ? 'text-yellow-600' : 'text-green-600'}`}>
+                  Strength: {getStrengthLabel()}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1">
+                <RequirementItem met={passwordFeedback.length} label="8+ chars" />
+                <RequirementItem met={passwordFeedback.uppercase} label="Uppercase" />
+                <RequirementItem met={passwordFeedback.lowercase} label="Lowercase" />
+                <RequirementItem met={passwordFeedback.number} label="Number" />
+                <RequirementItem met={passwordFeedback.special} label="Special char" />
+              </div>
+            </div>
+          )}
 
           <div className="relative">
             <input
@@ -103,10 +286,11 @@ export default function RegisterPage() {
 
           <button
             onClick={handleContinue}
+            disabled={isLoading || passwordScore < 3}
             className="w-full mt-4 py-3 rounded-xl font-medium text-white
               bg-gradient-to-r from-green-500 to-emerald-600
-              hover:from-green-600 hover:to-emerald-700 transition">
-            Continue
+              hover:from-green-600 hover:to-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+            {isLoading ? 'Sending OTP...' : 'Continue'}
           </button>
         </div>
 
@@ -119,28 +303,51 @@ export default function RegisterPage() {
 
         {/* OTP MODAL */}
         {showOtpModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-2xl w-80">
-              <h3 className="text-lg font-semibold text-center mb-4">
-                Choose OTP Method
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-2xl w-96 shadow-2xl">
+              <h3 className="text-xl font-semibold text-center mb-2">
+                Verify Email
               </h3>
+              <p className="text-center text-gray-500 text-sm mb-6">
+                Enter the 6-digit code sent to<br />
+                <span className="font-medium text-gray-900">{email}</span>
+              </p>
+
+              <div className="flex justify-between mb-6 gap-2">
+                {otp.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => {
+                      otpInputs.current[index] = el
+                    }}
+                    type="text"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(e.target.value, index)}
+                    onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                    className="w-12 h-14 border-2 border-slate-200 rounded-xl text-center text-xl font-bold 
+                    focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition"
+                  />
+                ))}
+              </div>
+
+              {otpError && (
+                <p className="text-red-500 text-center text-sm mb-4">{otpError}</p>
+              )}
 
               <button
-                onClick={() =>
-                  router.push(`/verify-otp?method=email&value=${email}`)
-                }
-                className="w-full bg-blue-500 text-white py-2 rounded-lg mb-3"
-              >
-                Send OTP to Email
+                onClick={verifyAndSignup}
+                disabled={isVerifying || otp.join('').length !== 6}
+                className="w-full py-3 rounded-xl font-medium text-white
+                  bg-gradient-to-r from-green-500 to-emerald-600
+                  hover:from-green-600 hover:to-emerald-700 transition disabled:opacity-50">
+                {isVerifying ? 'Verifying...' : 'Verify & Create Account'}
               </button>
 
               <button
-                onClick={() =>
-                  router.push(`/verify-otp?method=phone&value=${phone}`)
-                }
-                className="w-full bg-purple-500 text-white py-2 rounded-lg"
-              >
-                Send OTP to Phone
+                onClick={() => setShowOtpModal(false)}
+                className="w-full mt-3 text-gray-500 text-sm hover:text-gray-700">
+                Cancel
               </button>
             </div>
           </div>
@@ -161,6 +368,16 @@ export default function RegisterPage() {
           box-shadow: 0 0 0 3px rgba(16,185,129,0.25);
         }
       `}</style>
+    </div>
+  )
+}
+
+function RequirementItem({ met, label }: { met: boolean; label: string }) {
+  return (
+    <div className={`flex items-center gap-1.5 text-xs transition-colors duration-300
+            ${met ? 'text-green-600' : 'text-gray-400'}`}>
+      {met ? <Check size={12} /> : <X size={12} />}
+      <span>{label}</span>
     </div>
   )
 }
