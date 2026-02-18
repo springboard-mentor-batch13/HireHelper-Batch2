@@ -5,6 +5,8 @@ import { useState, useRef, useEffect } from 'react'
 
 export default function VerifyOTP() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const email = searchParams.get("email")
 
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', ''])
   const [verified, setVerified] = useState(false)
