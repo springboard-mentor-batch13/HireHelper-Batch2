@@ -22,7 +22,7 @@ class User(Base):
 
 
 # -------------------------
-# OTP VERIFICATIONS (HER DESIGN)
+# OTP VERIFICATIONS 
 # -------------------------
 class OTPVerification(Base):
     __tablename__ = "otp_verifications"
@@ -56,18 +56,4 @@ class Task(Base):
 
     owner = relationship("User")
 
-from sqlalchemy import Column, String, DateTime
-from datetime import datetime, timedelta
-import uuid
 
-class OTPVerification(Base):
-    __tablename__ = "otp_verifications"
-
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    email = Column(String, nullable=False)
-    first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=False)
-    phone_number = Column(String)
-    password = Column(String, nullable=False)  # store hashed password
-    otp = Column(String, nullable=False)
-    expires_at = Column(DateTime, nullable=False)
