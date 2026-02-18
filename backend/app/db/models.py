@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String
-from sqlalchemy.dialects.sqlite import BLOB
+from sqlalchemy import Column, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from datetime import datetime
 import uuid
 
 from .database import Base
