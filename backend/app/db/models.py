@@ -1,10 +1,14 @@
-from sqlalchemy import Column, String
-from sqlalchemy.dialects.sqlite import BLOB
+from sqlalchemy import Column, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from datetime import datetime
 import uuid
 
 from .database import Base
 
 
+# -------------------------
+# USERS
+# -------------------------
 class User(Base):
     __tablename__ = "users"
 
@@ -16,11 +20,28 @@ class User(Base):
     password = Column(String, nullable=False)
     profile_picture = Column(String)
 
-from sqlalchemy import Column, String, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from datetime import datetime
+
+# -------------------------
+# OTP VERIFICATIONS (HER DESIGN)
+# -------------------------
+class OTPVerification(Base):
+    __tablename__ = "otp_verifications"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String, nullable=False, index=True)
+
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    phone_number = Column(String, nullable=True)
+    password = Column(String, nullable=False)
+
+    otp = Column(String, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
 
 
+# -------------------------
+# TASKS
+# -------------------------
 class Task(Base):
     __tablename__ = "tasks"
 

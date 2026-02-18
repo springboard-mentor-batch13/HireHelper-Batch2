@@ -102,7 +102,13 @@ export default function RegisterPage() {
       const res = await fetch('http://127.0.0.1:8000/auth/request-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({
+          email,
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: phone,
+          password: password
+        })
       })
 
       if (!res.ok) {
