@@ -192,54 +192,7 @@ export default function RegisterPage() {
     }
   }
 
-  const handlePasswordChange = (value: string) => {
-    setPassword(value)
-    setStrength(checkStrength(value))
-  }
-const handleContinue = async () => {
-  if (!firstName || !lastName || !email) {
-    setError("Please fill all required fields.")
-    return
-  }
 
-  if (password !== confirmPassword) {
-    setError("Passwords do not match.")
-    return
-  }
-
-  if (strength === "Weak") {
-    setError("Password is too weak.")
-    return
-  }
-
-  try {
-    const response = await fetch("http://127.0.0.1:8000/auth/send-otp", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        first_name: firstName,
-        last_name: lastName,
-        email: email,
-        phone_number: phone,
-        password: password
-      }),
-    })
-
-    const result = await response.json()
-
-    if (!response.ok) {
-      setError(result.detail || "Failed to send OTP")
-      return
-    }
-
-    router.push(`/verify-otp?email=${email}`)
-
-  } catch {
-    setError("Something went wrong")
-  }
-}
   return (
     <div className="min-h-screen w-full flex items-center justify-center 
       bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 px-4 py-8">
