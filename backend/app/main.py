@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi import FastAPI
+app = FastAPI()
+from app.api.tasks.routes import router as task_router
 from app.db.database import engine, Base
 from app.db import models
 from app.api.auth.routes import router as auth_router
@@ -11,7 +13,7 @@ app = FastAPI(
     title="HireHelper Backend",
     version="1.0.0"
 )
-
+app.include_router(task_router)
 # ✅ CORS (THIS FIXES OPTIONS 404)
 app.add_middleware(
     CORSMiddleware,

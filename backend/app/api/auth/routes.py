@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from fastapi.security import OAuth2PasswordRequestForm
 from app.db.database import get_db
 from .schemas import UserCreate, UserLogin, RequestOTP, VerifyOTP, ForgotPasswordRequest, ResetPassword
 from .service import create_user, authenticate_user, send_otp_email, verify_otp, send_password_reset_otp, reset_password
@@ -8,6 +8,17 @@ from pydantic import BaseModel
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+@router.post("/token")
+def login_oauth(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    result = authenticate_user(db, form_data.username, form_data.password)
+
+    if not result:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    return result
 
 # -------------------------
 # REQUEST OTP

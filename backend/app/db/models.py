@@ -40,20 +40,36 @@ class OTPVerification(Base):
 
 
 # -------------------------
+# -------------------------
 # TASKS
 # -------------------------
 class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"))
+    
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+
     title = Column(String, nullable=False)
-    description = Column(String)
-    location = Column(String)
-    start_time = Column(DateTime, default=datetime.utcnow)
+    description = Column(String, nullable=False)
+    location = Column(String, nullable=False)
+
+    start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=True)
+
+    image_url = Column(String, nullable=True)
+
     status = Column(String, default="open")
+
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     owner = relationship("User")
 
+class TaskRequest(Base):
+    __tablename__ = "task_requests"
 
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    task_id = Column(String, ForeignKey("tasks.id"))
+    requester_id = Column(String, ForeignKey("users.id"))
+    status = Column(String, default="pending")
+    created_at = Column(DateTime, default=datetime.utcnow)
