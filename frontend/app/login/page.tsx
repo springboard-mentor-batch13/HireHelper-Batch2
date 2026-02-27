@@ -46,11 +46,24 @@ export default function LoginPage() {
       }
 
       // Store token based on Remember Me
-      if (rememberMe) {
-        localStorage.setItem('token', data.access_token)
-      } else {
-        sessionStorage.setItem('token', data.access_token)
-      }
+      // if (rememberMe) {
+      //   localStorage.setItem('token', data.access_token)
+      // } else {
+      //   sessionStorage.setItem('token', data.access_token)
+      // }
+
+       const storage = rememberMe ? localStorage : sessionStorage
+
+        storage.setItem('token', data.access_token)
+
+        // Store user details
+        storage.setItem(
+          'user',
+          JSON.stringify({
+            name: data.user?.name || email.split('@')[0],
+            email: data.user?.email || email
+          })
+        )
 
       router.push('/dashboard')
     } catch (err: any) {
