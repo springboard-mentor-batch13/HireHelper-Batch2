@@ -65,7 +65,7 @@ export default function LoginPage() {
           })
         )
 
-      router.push('/dashboard')
+      router.push('/dashboard/feed')
     } catch (err: any) {
       setError(err.message)
     } finally {
