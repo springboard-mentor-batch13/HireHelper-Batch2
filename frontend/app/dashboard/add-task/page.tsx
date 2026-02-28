@@ -33,7 +33,6 @@ export default function AddTaskPage() {
     e.preventDefault();
     setError("");
 
-    // start_time is required by the backend
     if (!startDate || !startTime) {
       setError("Start date and start time are required.");
       return;
@@ -54,11 +53,8 @@ export default function AddTaskPage() {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("location", location);
-
-      // Backend expects ISO datetime string e.g. "2026-02-28T14:00"
       formData.append("start_time", `${startDate}T${startTime}`);
 
-      // end_time is optional — only append if both date and time are filled
       if (endDate && endTime) {
         formData.append("end_time", `${endDate}T${endTime}`);
       }
@@ -70,7 +66,6 @@ export default function AddTaskPage() {
       const res = await fetch("http://127.0.0.1:8000/tasks/", {
         method: "POST",
         headers: {
-          // ⚠️ Do NOT set Content-Type — browser sets it automatically with FormData boundary
           Authorization: `Bearer ${token}`,
         },
         body: formData,
@@ -78,14 +73,12 @@ export default function AddTaskPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        // FastAPI validation errors come as an array under "detail"
         if (Array.isArray(data.detail)) {
           throw new Error(data.detail.map((d: any) => d.msg).join(", "));
         }
         throw new Error(data.detail || "Failed to create task");
       }
 
-      // Success — feed will now show the new task
       router.push("/dashboard/feed");
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
@@ -97,7 +90,7 @@ export default function AddTaskPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-3xl mx-auto bg-white shadow-lg rounded-2xl p-8">
-        <h2 className="text-2xl font-bold mb-6">Add New Task</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">Add New Task</h2>
 
         {/* Error Banner */}
         {error && (
@@ -110,39 +103,39 @@ export default function AddTaskPage() {
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium mb-1">Task Title</label>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Task Title</label>
             <input
               type="text"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white placeholder-gray-400"
               placeholder="Enter task title"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Description</label>
             <textarea
               required
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white placeholder-gray-400"
               placeholder="Describe your task"
             />
           </div>
 
           {/* Location */}
           <div>
-            <label className="block text-sm font-medium mb-1">Location</label>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Location</label>
             <input
               type="text"
               required
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white placeholder-gray-400"
               placeholder="Enter location"
             />
           </div>
@@ -150,7 +143,7 @@ export default function AddTaskPage() {
           {/* Start Date & Time — REQUIRED */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700">
                 Start Date <span className="text-red-500">*</span>
               </label>
               <input
@@ -158,11 +151,11 @@ export default function AddTaskPage() {
                 required
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full border rounded-lg p-3"
+                className="w-full border rounded-lg p-3 text-gray-900 bg-white [color-scheme:light]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700">
                 Start Time <span className="text-red-500">*</span>
               </label>
               <input
@@ -170,7 +163,7 @@ export default function AddTaskPage() {
                 required
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full border rounded-lg p-3"
+                className="w-full border rounded-lg p-3 text-gray-900 bg-white [color-scheme:light]"
               />
             </div>
           </div>
@@ -178,32 +171,32 @@ export default function AddTaskPage() {
           {/* End Date & Time — OPTIONAL */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700">
                 End Date <span className="text-gray-400 text-xs">(optional)</span>
               </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full border rounded-lg p-3"
+                className="w-full border rounded-lg p-3 text-gray-900 bg-white [color-scheme:light]"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-gray-700">
                 End Time <span className="text-gray-400 text-xs">(optional)</span>
               </label>
               <input
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full border rounded-lg p-3"
+                className="w-full border rounded-lg p-3 text-gray-900 bg-white [color-scheme:light]"
               />
             </div>
           </div>
 
           {/* Image Upload */}
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-700">
               Task Image <span className="text-gray-400 text-xs">(optional)</span>
             </label>
             <div className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:bg-gray-50 transition">
@@ -234,7 +227,7 @@ export default function AddTaskPage() {
               type="button"
               onClick={() => router.back()}
               disabled={isLoading}
-              className="px-6 py-2 border rounded-lg disabled:opacity-50"
+              className="px-6 py-2 border rounded-lg text-gray-700 disabled:opacity-50"
             >
               Cancel
             </button>
