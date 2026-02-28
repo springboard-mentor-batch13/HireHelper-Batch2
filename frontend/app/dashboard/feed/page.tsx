@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { MapPin, Clock, Loader2 } from "lucide-react";
+import RequestButton from "../../../components/RequestButton";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -15,6 +16,8 @@ interface Task {
   image_url?: string | null;
   status: string;
   created_at: string;
+  creator_id?: string;
+  user_id?: string;
 }
 
 const Feed = () => {
@@ -23,8 +26,19 @@ const Feed = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [requestedTasks, setRequestedTasks] = useState<string[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
+    // Get current user for RequestButton
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        if (user.id) setCurrentUserId(user.id);
+      }
+    } catch { }
+
     const fetchTasks = async () => {
       try {
         setLoading(true);
@@ -44,10 +58,15 @@ const Feed = () => {
           }
         );
 
+        if (!res.ok) {
+          throw new Error("Failed to fetch tasks");
+        }
+
         const data = await res.json();
         setTasks(Array.isArray(data) ? data : []);
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
+        setError(err.message || "Failed to load feed");
       } finally {
         setLoading(false);
       }
@@ -191,11 +210,10 @@ const Feed = () => {
                       <button
                         onClick={() => handleRequest(task.id)}
                         disabled={isRequested}
-                        className={`text-xs px-3 py-1 rounded-md transition ${
-                          isRequested
-                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
-                        }`}
+                        className={`text-xs px-3 py-1 rounded-md transition ${isRequested
+                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          : "bg-blue-600 text-white hover:bg-blue-700"
+                          }`}
                       >
                         {isRequested ? "Request Sent" : "Request"}
                       </button>
@@ -231,6 +249,7 @@ const Feed = () => {
             </div>
           )}
         </>
+
       )}
     </div>
   );

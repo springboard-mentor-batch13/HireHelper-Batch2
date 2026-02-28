@@ -21,7 +21,7 @@ import {
 const navItems = [
   { href: "/dashboard/feed", label: "Feed", icon: Home },
   { href: "/dashboard/my-tasks", label: "My Tasks", icon: ListTodo },
-  { href: "/dashboard/requests", label: "Requests", icon: MessageSquare, badge: 1 },
+  { href: "/dashboard/requests", label: "Requests", icon: MessageSquare, hasBadge: true },
   { href: "/dashboard/my-requests", label: "My Requests", icon: Send },
   { href: "/dashboard/add-task", label: "Add Task", icon: Plus },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
@@ -36,6 +36,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
   /* ================= AUTH + USER LOAD ================= */
   useEffect(() => {
@@ -61,8 +62,37 @@ export default function DashboardLayout({
     router.push("/login");
   };
 
+  useEffect(() => {
+    // Fetch pending requests to update the badge
+    const fetchPendingRequests = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch("http://127.0.0.1:8000/api/requests/incoming", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const pending = data.filter((req: any) => req.status === "pending");
+          setPendingRequestsCount(pending.length);
+        }
+      } catch (err) {
+        console.error("Failed to fetch pending requests", err);
+      }
+    };
+
+    fetchPendingRequests();
+
+    // Optional polling or refresh could be added here
+  }, [pathname]); // Refresh when navigating back to layout routes
+
   return (
     <div className="flex h-screen w-full bg-gray-100 overflow-hidden">
+      {/* Mobile Overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/40 md:hidden"
@@ -99,17 +129,16 @@ export default function DashboardLayout({
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-blue-100 text-blue-600"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${isActive
+                  ? "bg-blue-100 text-blue-600"
+                  : "text-gray-600 hover:bg-gray-100"
+                  }`}
               >
                 <item.icon className="h-5 w-5" />
                 {item.label}
-                {item.badge && (
+                {item.hasBadge && pendingRequestsCount > 0 && (
                   <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                    {item.badge}
+                    {pendingRequestsCount}
                   </span>
                 )}
               </Link>
@@ -143,7 +172,12 @@ export default function DashboardLayout({
       <div className="flex flex-1 flex-col overflow-hidden w-full">
         {/* Header */}
         <header className="flex items-center justify-between border-b bg-white px-6 py-3">
-          <button className="md:hidden" onClick={() => setIsOpen(true)}>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden"
+            onClick={() => setIsOpen(true)}
+          >
             <Menu className="h-6 w-6" />
           </button>
 
@@ -152,9 +186,11 @@ export default function DashboardLayout({
           <div className="flex items-center gap-4 ml-auto">
             <button className="relative rounded-md p-2 text-gray-500 hover:bg-gray-100">
               <Bell className="h-5 w-5" />
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
-                3
-              </span>
+              {pendingRequestsCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                  {pendingRequestsCount}
+                </span>
+              )}
             </button>
           </div>
         </header>
