@@ -38,7 +38,6 @@ Base.metadata.create_all(bind=engine)
 
 # Routers
 app.include_router(auth_router)   # /auth/*
-app.include_router(task_router)
 app.include_router(request_router)
 
 @app.get("/")
