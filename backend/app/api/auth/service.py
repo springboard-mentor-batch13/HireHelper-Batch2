@@ -115,7 +115,7 @@ Do not share it with anyone.
         return True
 
     except Exception as e:
-        print("❌ Failed to send OTP:", e)
+        print(f"❌ Failed to send OTP email: {e}")
         return False
 
 
@@ -202,7 +202,7 @@ If you did not request this, please ignore this email.
         return True
 
     except Exception as e:
-        print("❌ Failed to send Password Reset OTP:", e)
+        print(f"❌ Failed to send Password Reset email: {e}")
         return False
 
 

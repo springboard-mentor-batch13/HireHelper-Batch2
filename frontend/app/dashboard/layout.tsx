@@ -91,7 +91,7 @@ export default function DashboardLayout({
   }, [pathname]); // Refresh when navigating back to layout routes
 
   return (
-    <div className="flex h-screen w-full bg-gray-100 overflow-hidden">
+    <div className="flex h-screen w-full bg-gray-100 text-slate-900 overflow-hidden">
       {/* Mobile Overlay */}
       {isOpen && (
         <div

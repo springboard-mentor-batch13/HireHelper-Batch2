@@ -1,12 +1,17 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 app = FastAPI()
 from app.api.tasks.routes import router as task_router
 from app.db.database import engine, Base
 from app.db import models
 from app.api.auth.routes import router as auth_router
 from app.api.tasks.routes import router as task_router
+from app.api.requests.routes import router as request_router
 from app.api.dependencies import get_current_user
 
 app = FastAPI(
@@ -34,6 +39,7 @@ Base.metadata.create_all(bind=engine)
 # Routers
 app.include_router(auth_router)   # /auth/*
 app.include_router(task_router)
+app.include_router(request_router)
 
 @app.get("/")
 def root():

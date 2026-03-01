@@ -52,18 +52,18 @@ export default function LoginPage() {
       //   sessionStorage.setItem('token', data.access_token)
       // }
 
-       const storage = rememberMe ? localStorage : sessionStorage
+      const storage = rememberMe ? localStorage : sessionStorage
 
-        storage.setItem('token', data.access_token)
+      storage.setItem('token', data.access_token)
 
-        // Store user details
-        storage.setItem(
-          'user',
-          JSON.stringify({
-            name: data.user?.name || email.split('@')[0],
-            email: data.user?.email || email
-          })
-        )
+      // Store user details
+      storage.setItem(
+        'user',
+        JSON.stringify({
+          name: data.user?.name || email.split('@')[0],
+          email: data.user?.email || email
+        })
+      )
 
       router.push('/dashboard/feed')
     } catch (err: any) {
@@ -351,7 +351,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+      <div className="bg-white text-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-8">
 
         {/* Icon */}
         <div className="flex justify-center mb-4">

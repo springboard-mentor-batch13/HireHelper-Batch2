@@ -16,6 +16,17 @@ export default function AddTaskPage() {
   const [endTime, setEndTime] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Form state
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [category, setCategory] = useState("Select category");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
@@ -53,10 +64,13 @@ export default function AddTaskPage() {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("location", location);
-      formData.append("start_time", `${startDate}T${startTime}`);
+      // Combine date + time for backend
+      const startDateTime = `${startDate}T${startTime}:00`;
+      formData.append("start_time", startDateTime);
 
       if (endDate && endTime) {
-        formData.append("end_time", `${endDate}T${endTime}`);
+        const endDateTime = `${endDate}T${endTime}:00`;
+        formData.append("end_time", endDateTime);
       }
 
       if (imageFile) {
@@ -98,6 +112,8 @@ export default function AddTaskPage() {
             {error}
           </div>
         )}
+
+        {error && <p className="mb-4 text-red-500 font-medium">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-5">
 
@@ -194,6 +210,22 @@ export default function AddTaskPage() {
             </div>
           </div>
 
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full border rounded-lg p-3 text-gray-900 bg-white"
+            >
+              <option>Select category</option>
+              <option>Cleaning</option>
+              <option>Delivery</option>
+              <option>Repair</option>
+              <option>Other</option>
+            </select>
+          </div>
+
           {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700">
@@ -209,11 +241,7 @@ export default function AddTaskPage() {
               />
               <label htmlFor="fileUpload" className="cursor-pointer">
                 {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="mx-auto h-40 object-contain"
-                  />
+                  <img src={imagePreview} alt="Preview" className="mx-auto h-40 object-contain" />
                 ) : (
                   <p className="text-gray-500">Click to upload or drag & drop image</p>
                 )}

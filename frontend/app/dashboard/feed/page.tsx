@@ -96,16 +96,44 @@ const Feed = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  // 🟢 Temporary Request Button Handler
-  const handleRequest = (taskId: string) => {
+  // 🟢 Real Request Button Handler
+  const handleRequest = async (taskId: string) => {
     if (requestedTasks.includes(taskId)) return;
 
-    setRequestedTasks((prev) => [...prev, taskId]);
+    try {
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in to request a task.");
+        return;
+      }
 
-    // Temporary simulation (remove after real API)
-    setTimeout(() => {
-      console.log("Request sent for:", taskId);
-    }, 500);
+      const defaultMessage = "Hi! I have the required skills and would love to help you out with this task.";
+
+      const res = await fetch("http://127.0.0.1:8000/api/requests/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          taskId: taskId,
+          message: defaultMessage
+        })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || "Failed to send request.");
+      }
+
+      // Success
+      setRequestedTasks((prev) => [...prev, taskId]);
+      console.log("Real request sent successfully for:", taskId);
+
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Something went wrong.");
+    }
   };
 
   return (

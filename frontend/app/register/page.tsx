@@ -197,7 +197,7 @@ export default function RegisterPage() {
     <div className="min-h-screen w-full flex items-center justify-center 
       bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-900 px-4 py-8">
 
-      <div className="relative w-full max-w-md bg-white/95 backdrop-blur 
+      <div className="relative w-full max-w-md bg-white/95 text-slate-900 backdrop-blur 
         rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.35)] p-8">
 
         {/* Header */}
@@ -311,7 +311,7 @@ export default function RegisterPage() {
         {/* OTP MODAL */}
         {showOtpModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-2xl w-96 shadow-2xl">
+            <div className="bg-white text-slate-900 p-6 rounded-2xl w-96 shadow-2xl">
               <h3 className="text-xl font-semibold text-center mb-2">
                 Verify Email
               </h3>
