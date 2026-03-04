@@ -10,13 +10,17 @@ export default function AddTaskPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
+
   const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("");
+
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("");
+
+  const [category, setCategory] = useState("Select category");
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");

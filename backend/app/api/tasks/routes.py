@@ -8,8 +8,6 @@ from app.api.tasks.schemas import TaskResponse
 from app.api.tasks.service import create_task, get_my_tasks
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
-
-
 # -------------------------
 # ADD TASK
 # -------------------------
@@ -34,8 +32,6 @@ def add_task(
         end_time=end_time,
         image=image,
     )
-
-
 # -------------------------
 # MY TASKS
 # -------------------------
