@@ -2,24 +2,23 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
+from sqlalchemy import text
 
 load_dotenv()
 
-app = FastAPI()
-from app.api.tasks.routes import router as task_router
 from app.db.database import engine, Base
 from app.db import models
 from app.api.auth.routes import router as auth_router
 from app.api.tasks.routes import router as task_router
-from app.api.requests.routes import router as request_router
+from app.api.requests.routes import router as requests_router
 from app.api.dependencies import get_current_user
 
 app = FastAPI(
     title="HireHelper Backend",
     version="1.0.0"
 )
-app.include_router(task_router)
-# ✅ CORS (THIS FIXES OPTIONS 404)
+
+# ✅ CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -27,7 +26,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
-    ],  # frontend URL
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,9 +35,36 @@ app.add_middleware(
 # Create tables
 Base.metadata.create_all(bind=engine)
 
+# ✅ Safe column migrations (adds missing columns to existing tables)
+def run_migrations():
+    with engine.connect() as conn:
+        # Add 'bio' column if it doesn't exist
+        try:
+            conn.execute(text("ALTER TABLE users ADD COLUMN bio TEXT"))
+            conn.commit()
+            print("✅ Migration: added 'bio' column to users")
+        except Exception:
+            pass  # Column already exists
+
+        # Add 'profile_picture' column if it doesn't exist
+        try:
+            conn.execute(text("ALTER TABLE users ADD COLUMN profile_picture TEXT"))
+            conn.commit()
+            print("✅ Migration: added 'profile_picture' column to users")
+        except Exception:
+            pass  # Column already exists
+
+run_migrations()
+
+from fastapi.staticfiles import StaticFiles
+
 # Routers
-app.include_router(auth_router)   # /auth/*
-app.include_router(request_router)
+app.include_router(auth_router)       # /auth/*
+app.include_router(task_router, prefix="/api")  # /api/tasks/*
+app.include_router(requests_router)   # /api/requests/*
+
+# Mount uploads directory to serve static images
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 @app.get("/")
 def root():

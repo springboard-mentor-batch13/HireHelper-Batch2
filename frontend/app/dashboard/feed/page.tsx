@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { MapPin, Clock, Loader2 } from "lucide-react";
-import RequestButton from "../../../components/RequestButton";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -19,6 +18,19 @@ interface Task {
   creator_id?: string;
   user_id?: string;
 }
+
+const generatePlaceholder = (title: string) => {
+  const hash = title.split("").reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+  const hue = Math.abs(hash) % 360;
+  const bgColor = `hsl(${hue}, 80%, 85%)`;
+  const textColor = `hsl(${hue}, 80%, 25%)`;
+
+  const cleanTitle = title.replace(/['"<>]/g, ""); // strip characters for safe injection
+  const displayTitle = cleanTitle.length > 20 ? cleanTitle.substring(0, 20) + "..." : cleanTitle;
+
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400'><rect fill='${bgColor}' width='600' height='400'/><text fill='${textColor}' font-family='sans-serif' font-weight='bold' font-size='32' x='50%' y='50%' text-anchor='middle' dominant-baseline='middle'>${displayTitle}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
 
 const Feed = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -50,7 +62,7 @@ const Feed = () => {
         if (!token) return;
 
         const res = await fetch(
-          "http://127.0.0.1:8000/tasks/feed",
+          "http://127.0.0.1:8000/api/tasks/feed",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -116,13 +128,18 @@ const Feed = () => {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          taskId: taskId,
+          task_id: taskId,
           message: defaultMessage
         })
       });
 
       if (!res.ok) {
         const data = await res.json();
+        // If they already requested it, just treat it as success in the UI
+        if (data.detail && data.detail.includes("already requested")) {
+          setRequestedTasks((prev) => [...prev, taskId]);
+          return;
+        }
         throw new Error(data.detail || "Failed to send request.");
       }
 
@@ -179,10 +196,11 @@ const Feed = () => {
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {paginatedTasks.map((task) => {
+              const PLACEHOLDER = generatePlaceholder(task.title || "No Title");
               const imageSrc =
                 task.image_url && task.image_url !== "null"
                   ? `http://127.0.0.1:8000/${task.image_url.replace(/\\/g, "/")}`
-                  : "/placeholder.jpg";
+                  : PLACEHOLDER;
 
               const isRequested = requestedTasks.includes(task.id);
 
@@ -195,15 +213,15 @@ const Feed = () => {
                   <div className="h-44 overflow-hidden bg-gray-100">
                     <img
                       src={
-                        task.image_url
+                        task.image_url && task.image_url !== "null"
                           ? `http://127.0.0.1:8000/${task.image_url.replace(/\\/g, "/")}`
-                          : "https://placehold.co/600x400?text=No+Image"
+                          : PLACEHOLDER
                       }
                       alt={task.title}
                       className="w-full h-48 object-cover rounded-md"
                       onError={(e) => {
-                        e.currentTarget.onerror = null; // prevent infinite loop
-                        e.currentTarget.src = "https://placehold.co/600x400?text=No+Image";
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = PLACEHOLDER;
                       }}
                     />
                   </div>

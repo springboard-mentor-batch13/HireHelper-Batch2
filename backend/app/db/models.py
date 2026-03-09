@@ -19,6 +19,7 @@ class User(Base):
     phone_number = Column(String)
     password = Column(String, nullable=False)
     profile_picture = Column(String)
+    bio = Column(String, nullable=True)
 
 
 # -------------------------

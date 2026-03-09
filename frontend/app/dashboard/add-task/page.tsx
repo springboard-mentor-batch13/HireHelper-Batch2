@@ -63,11 +63,12 @@ export default function AddTaskPage() {
         formData.append("end_time", `${endDate}T${endTime}`);
       }
 
+      // Only append the image if an actual file was selected
       if (imageFile) {
         formData.append("image", imageFile);
       }
 
-      const res = await fetch("http://127.0.0.1:8000/tasks/", {
+      const res = await fetch("http://127.0.0.1:8000/api/tasks/", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -203,7 +204,7 @@ export default function AddTaskPage() {
             <label className="block text-sm font-medium mb-2 text-gray-700">
               Task Image <span className="text-gray-400 text-xs">(optional)</span>
             </label>
-            <div className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:bg-gray-50 transition">
+            <label htmlFor="fileUpload" className="block border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:bg-gray-50 transition">
               <input
                 type="file"
                 accept="image/*"
@@ -211,18 +212,16 @@ export default function AddTaskPage() {
                 className="hidden"
                 id="fileUpload"
               />
-              <label htmlFor="fileUpload" className="cursor-pointer">
-                {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="mx-auto h-40 object-contain"
-                  />
-                ) : (
-                  <p className="text-gray-500">Click to upload or drag & drop image</p>
-                )}
-              </label>
-            </div>
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="mx-auto h-40 object-contain"
+                />
+              ) : (
+                <p className="text-gray-500">Click to upload or drag & drop image</p>
+              )}
+            </label>
           </div>
 
           {/* Buttons */}

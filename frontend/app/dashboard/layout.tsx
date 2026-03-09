@@ -37,6 +37,8 @@ export default function DashboardLayout({
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [acceptedRequests, setAcceptedRequests] = useState<any[]>([]);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   /* ================= AUTH + USER LOAD ================= */
   useEffect(() => {
@@ -63,32 +65,40 @@ export default function DashboardLayout({
   };
 
   useEffect(() => {
-    // Fetch pending requests to update the badge
-    const fetchPendingRequests = async () => {
+    const fetchNotifications = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
         if (!token) return;
 
-        const res = await fetch("http://127.0.0.1:8000/api/requests/incoming", {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
+        // Fetch incoming requests for the sidebar badge (pending)
+        const incomingRes = await fetch("http://127.0.0.1:8000/api/requests/incoming", {
+          headers: { "Authorization": `Bearer ${token}` }
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          const pending = data.filter((req: any) => req.status === "pending");
+        if (incomingRes.ok) {
+          const incomingData = await incomingRes.json();
+          const pending = incomingData.filter((req: any) => req.status === "pending");
           setPendingRequestsCount(pending.length);
         }
+
+        // Fetch outgoing requests for the Bell notifications (accepted)
+        const outgoingRes = await fetch("http://127.0.0.1:8000/api/requests/my", {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (outgoingRes.ok) {
+            const outgoingData = await outgoingRes.json();
+            const accepted = outgoingData.filter((req: any) => req.status === "accepted");
+            setAcceptedRequests(accepted);
+        }
+
       } catch (err) {
-        console.error("Failed to fetch pending requests", err);
+        console.error("Failed to fetch notifications", err);
       }
     };
 
-    fetchPendingRequests();
-
-    // Optional polling or refresh could be added here
-  }, [pathname]); // Refresh when navigating back to layout routes
+    fetchNotifications();
+  }, [pathname]);
 
   return (
     <div className="flex h-screen w-full bg-gray-100 text-slate-900 overflow-hidden">
@@ -171,7 +181,7 @@ export default function DashboardLayout({
       {/* Main */}
       <div className="flex flex-1 flex-col overflow-hidden w-full">
         {/* Header */}
-        <header className="flex items-center justify-between border-b bg-white px-6 py-3">
+        <header className="flex items-center justify-between border-b bg-white px-6 py-3 relative">
 
           {/* Mobile Menu Button */}
           <button
@@ -184,14 +194,60 @@ export default function DashboardLayout({
           {/* Search Removed ✅ */}
 
           <div className="flex items-center gap-4 ml-auto">
-            <button className="relative rounded-md p-2 text-gray-500 hover:bg-gray-100">
-              <Bell className="h-5 w-5" />
-              {pendingRequestsCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
-                  {pendingRequestsCount}
-                </span>
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className="relative rounded-md p-2 text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition-colors"
+                title="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {acceptedRequests.length > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                    {acceptedRequests.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              {isNotificationsOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsNotificationsOpen(false)} 
+                  />
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50 overflow-hidden origin-top-right transition-all">
+                    <div className="px-4 py-2 border-b border-gray-50">
+                      <h3 className="font-semibold text-sm text-gray-900">Notifications</h3>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {acceptedRequests.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-gray-500">
+                          No new notifications
+                        </div>
+                      ) : (
+                        acceptedRequests.map((req) => (
+                          <div 
+                            key={req.id} 
+                            onClick={() => {
+                                setIsNotificationsOpen(false);
+                                router.push("/dashboard/my-requests");
+                            }}
+                            className="px-4 py-3 hover:bg-blue-50 cursor-pointer block text-sm transition-colors border-b border-gray-50 last:border-0"
+                          >
+                            <p className="text-gray-800">
+                                Your request to help with <strong className="font-semibold">{req.task_title}</strong> was <span className="text-green-600 font-medium">accepted</span>!
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                                {new Date(req.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
               )}
-            </button>
+            </div>
           </div>
         </header>
 
