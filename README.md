@@ -109,6 +109,7 @@ HireHelper-Batch2/
 │   │   │   │   ├── routes.py
 │   │   │   │   ├── schemas.py
 │   │   │   │   ├── service.py
+│   │   │   │
 │   │   │   ├── tasks/
 │   │   │       ├── routes.py
 │   │   │       ├── schemas.py
@@ -140,6 +141,5 @@ HireHelper-Batch2/
 │   ├── tailwind.config.js
 │
 ├── README.md
-
 # License
 This project is open-source and available for learning and development purposes.
