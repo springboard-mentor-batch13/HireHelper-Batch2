@@ -67,12 +67,12 @@ http://localhost:3000
 # 🔑 Environment Variables
 
 ## 📌 Backend (.env)
-DATABASE_URL=postgresql+psycopg2://postgres:hirehelper%401234@db.vrkzzytnxjvaxirqhmza.supabase.co:5432/postgres
-EMAIL_USER=bonjour6044@gmail.com
+DATABASE_URL=postgresql+psycopg2://postgres:hirehelper%401234@db.vrkzzytnxjvaxirqhmza.supabase.co:5432/postgres <br>
+EMAIL_USER=bonjour6044@gmail.com <br>
 EMAIL_PASS=qqjorbzbypkqygvg
 
 ## 📌 Frontend (.env.local)
-EMAIL_USER=bonjour6044@gmail.com
+EMAIL_USER=bonjour6044@gmail.com <br>
 EMAIL_PASS=qqjo rbzb ypkq ygvg
 
 # 🔌 API Endpoints
@@ -99,7 +99,7 @@ EMAIL_PASS=qqjo rbzb ypkq ygvg
 - Role-based access control
 
 ## Project Structure
-
+```text
 HireHelper-Batch2/
 │
 ├── backend/
@@ -141,5 +141,6 @@ HireHelper-Batch2/
 │   ├── tailwind.config.js
 │
 ├── README.md
+```
 # License
 This project is open-source and available for learning and development purposes.
