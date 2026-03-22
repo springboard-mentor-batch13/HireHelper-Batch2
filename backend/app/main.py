@@ -36,25 +36,47 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 # ✅ Safe column migrations (adds missing columns to existing tables)
+# def run_migrations():
+#     with engine.connect() as conn:
+#         # Add 'bio' column if it doesn't exist
+#         try:
+#             conn.execute(text("ALTER TABLE users ADD COLUMN bio TEXT"))
+#             conn.commit()
+#             print("✅ Migration: added 'bio' column to users")
+#         except Exception:
+#             pass  # Column already exists
+
+#         # Add 'profile_picture' column if it doesn't exist
+#         try:
+#             conn.execute(text("ALTER TABLE users ADD COLUMN profile_picture TEXT"))
+#             conn.commit()
+#             print("✅ Migration: added 'profile_picture' column to users")
+#         except Exception:
+#             pass  # Column already exists
+
+# run_migrations()
 def run_migrations():
     with engine.connect() as conn:
-        # Add 'bio' column if it doesn't exist
-        try:
-            conn.execute(text("ALTER TABLE users ADD COLUMN bio TEXT"))
-            conn.commit()
-            print("✅ Migration: added 'bio' column to users")
-        except Exception:
-            pass  # Column already exists
+        # Define a list of migrations to run: (Table Name, Column Name, Column Type)
+        migrations = [
+            ("users", "bio", "TEXT"),
+            ("users", "profile_picture", "TEXT"),
+            ("task_requests", "message", "TEXT"), # <--- Fixes your current error
+            ("task_requests", "status", "TEXT"),  # Just in case
+        ]
 
-        # Add 'profile_picture' column if it doesn't exist
-        try:
-            conn.execute(text("ALTER TABLE users ADD COLUMN profile_picture TEXT"))
-            conn.commit()
-            print("✅ Migration: added 'profile_picture' column to users")
-        except Exception:
-            pass  # Column already exists
+        for table, column, col_type in migrations:
+            try:
+                # SQLite doesn't have a native 'IF NOT EXISTS' for columns
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"))
+                conn.commit()
+                print(f"✅ Migration: added '{column}' to '{table}'")
+            except Exception:
+                # If it fails, the column likely already exists, so we skip silently
+                pass
 
 run_migrations()
+
 
 from fastapi.staticfiles import StaticFiles
 
